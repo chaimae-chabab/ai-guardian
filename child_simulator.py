@@ -2,18 +2,73 @@ import streamlit as st
 import time
 
 st.set_page_config(
-    page_title="AI Guardian - Téléphone Enfant",
+    page_title="AI Guardian | Protection Enfant",
     page_icon="📱",
     layout="centered"
 )
 
-st.title("📱 AI Guardian")
-st.subheader("Protection automatique sur le téléphone de l'enfant")
+# CSS PERSONNALISÉ
+st.markdown("""
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100..900;1,100..900&display=swap');
+    
+    html, body, [class*="css"] {
+        font-family: 'Inter', sans-serif;
+    }
+    
+    .phone-mock {
+        background: #1a1a2e;
+        border-radius: 2rem;
+        padding: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .message-bubble {
+        background: white;
+        padding: 0.75rem;
+        border-radius: 1rem;
+        margin-bottom: 0.5rem;
+        box-shadow: 0 1px 2px rgb(0 0 0 / 0.1);
+    }
+    
+    .header-gradient {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 1.5rem;
+        border-radius: 1rem;
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    .privacy-note {
+        background: #f0fdf4;
+        padding: 1rem;
+        border-radius: 0.75rem;
+        border-left: 4px solid #10b981;
+        margin: 1rem 0;
+    }
+    
+    .footer {
+        text-align: center;
+        padding: 1.5rem;
+        color: #6b7280;
+        font-size: 0.75rem;
+        border-top: 1px solid #e5e7eb;
+        margin-top: 2rem;
+    }
+</style>
+""", unsafe_allow_html=True)
 
-st.markdown("---")
+# EN-TÊTE
+st.markdown("""
+<div class="header-gradient">
+    <h1 style="color: white; margin: 0;">📱 AI Guardian</h1>
+    <p style="color: #e0e7ff; margin: 0.5rem 0 0 0;">Protection automatique sur votre téléphone</p>
+</div>
+""", unsafe_allow_html=True)
 
-# Simulation d'arrivée de message
-st.markdown("### 📩 Simulation d'arrivée d'un message")
+# ZONE DE SIMULATION
+st.markdown("### 📩 Simulation d'arrivée de messages")
+st.caption("L'application analyse automatiquement chaque message reçu")
 
 col1, col2, col3 = st.columns(3)
 
@@ -31,103 +86,101 @@ with col3:
 
 if 'type' in st.session_state:
     
-    # Définition des messages simulés
-    messages_exemples = {
-        "suspect": "❌ Message reçu : 'Hey, tu es spécial(e). Ne dis rien à tes parents. Envoie-moi une photo.'",
-        "manipulation": "⚠️ Message reçu : 'Si tu tenais vraiment à moi, tu ferais ce que je te demande. Tu es la seule personne qui me comprend.'",
-        "normal": "✅ Message reçu : 'Salut, tu as fini les devoirs de maths ? On se voit au lycée demain ?'"
+    messages = {
+        "suspect": "❌ Message suspect reçu\n\n« Tu es spécial(e). Ne dis rien à tes parents. Envoie-moi une photo. »",
+        "manipulation": "⚠️ Message suspect reçu\n\n« Si tu tenais vraiment à moi, tu ferais ce que je te demande. Tu es la seule personne qui me comprend. »",
+        "normal": "✅ Message normal reçu\n\n« Salut ! Tu as fini les devoirs ? On se voit demain au lycée ? »"
     }
     
     scores = {
-        "suspect": {"score": 87, "niveau": "CRITIQUE", "categorie": "Grooming / Manipulation"},
-        "manipulation": {"score": 54, "niveau": "MOYEN", "categorie": "Manipulation émotionnelle"},
+        "suspect": {"score": 87, "niveau": "CRITIQUE", "categorie": "Grooming"},
+        "manipulation": {"score": 54, "niveau": "MOYEN", "categorie": "Manipulation"},
         "normal": {"score": 12, "niveau": "FAIBLE", "categorie": "Aucune menace"}
     }
     
     with st.spinner("🤖 IA en cours d'analyse..."):
-        time.sleep(1.5)
+        time.sleep(1.2)
     
     st.markdown("---")
     
-    # 1. CE QUE L'ENFANT REÇOIT (le vrai message)
-    st.markdown("### 📱 Sur le téléphone de l'enfant")
-    st.write(messages_exemples[st.session_state['type']])
+    # Message reçu
+    st.markdown("### 📱 Message reçu sur le téléphone")
+    st.info(messages[st.session_state['type']])
     
-    st.markdown("---")
-    
-    # 2. ANALYSE DE L'IA
-    st.markdown("### 🤖 Analyse automatique de l'IA")
+    # Analyse IA
+    st.markdown("### 🤖 Analyse automatique")
     
     score = scores[st.session_state['type']]["score"]
     niveau = scores[st.session_state['type']]["niveau"]
     categorie = scores[st.session_state['type']]["categorie"]
     
-    col_a, col_b = st.columns(2)
+    col_a, col_b, col_c = st.columns(3)
     with col_a:
         st.metric("Score de danger", f"{score}%")
     with col_b:
         st.metric("Niveau", niveau)
+    with col_c:
+        st.metric("Catégorie", categorie)
     
-    st.info(f"**Catégorie :** {categorie}")
-    
+    # Alerte parent
     st.markdown("---")
-    
-    # 3. CE QUE LE PARENT REÇOIT (PAS le message original)
-    st.markdown("### 📲 Ce que le parent reçoit sur son téléphone")
+    st.markdown("### 📲 Alerte envoyée au parent")
     
     if score >= 70:
-        st.error("🔴 **ALERTE ROUGE - DANGER ÉLEVÉ**")
-        st.warning("Le parent voit : 'Niveau de danger : 87% - Catégorie : Grooming - Parlez calmement avec votre enfant'")
+        st.error("""
+        🔴 **ALERTE ROUGE – DANGER ÉLEVÉ**
+        
+        > Le parent reçoit : « Danger de grooming détecté – Score 87% – Parlez calmement avec votre enfant »
+        """)
     elif score >= 40:
-        st.warning("🟡 **ALERTE JAUNE - DANGER MOYEN**")
-        st.info("Le parent voit : 'Niveau de danger : 54% - Catégorie : Manipulation - Surveillez les interactions'")
+        st.warning("""
+        🟡 **ALERTE JAUNE – DANGER MOYEN**
+        
+        > Le parent reçoit : « Manipulation émotionnelle détectée – Score 54% – Surveillez les interactions »
+        """)
     else:
-        st.success("✅ **AUCUNE ALERTE**")
-        st.info("Le parent voit : 'Aucun danger détecté - Conversation normale'")
-    
-    # Message important pour le jury
-    st.info("🔒 **Le parent ne voit PAS le message original** - Seul le niveau de danger est partagé")
-    
-    st.markdown("---")
-    
-    # Explication pour le jury
-    with st.expander("ℹ️ Comment le parent reçoit l'alerte (dans un vrai produit)"):
-        st.write("""
-        **Dans la version réelle du produit :**
+        st.success("""
+        ✅ **AUCUNE ALERTE**
         
-        1. **Notification push** : Le parent reçoit une alerte sur son téléphone (comme WhatsApp)
-        2. **SMS automatique** : Un message texte est envoyé au parent
-        3. **Email** : Un email d'alerte est envoyé
-        4. **Dashboard sécurisé** : Le parent peut se connecter pour voir l'historique des alertes
-        
-        **Dans cette démonstration :**
-        - Nous simulons ce que le parent verrait sur son téléphone
-        - La technologie pour envoyer de vraies notifications existe (Firebase, Twilio, etc.)
-        - Par manque de temps (10 jours), nous nous concentrons sur le cœur : l'IA et la protection de la vie privée
+        > Le parent reçoit : « Aucun danger détecté – Conversation normale »
         """)
     
-    if st.button("🔄 Nouvelle simulation", use_container_width=True):
+    # Privacy note
+    st.markdown("""
+    <div class="privacy-note">
+        <p style="margin: 0;">🔒 <strong>Respect de la vie privée</strong> – Le parent ne voit PAS le contenu du message. Seul le niveau de danger est partagé.</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Bouton reset
+    if st.button("🔄 Simuler un nouveau message", use_container_width=True):
         del st.session_state['type']
         st.rerun()
 
 else:
-    st.info("👆 Cliquez sur un bouton pour simuler l'arrivée d'un message")
+    st.info("👆 Cliquez sur un bouton ci-dessus pour simuler l'arrivée d'un message")
     
-    with st.expander("📖 Comment ça fonctionne (pour le jury)"):
+    # Explication fonctionnement
+    with st.expander("📖 Comment ça fonctionne ?"):
         st.write("""
-        **1. L'enfant reçoit un message** → L'application l'analyse automatiquement
+        **Dans la vraie vie :**
         
-        **2. L'IA détecte les dangers** → Grooming, manipulation, harcèlement
+        1. L'enfant reçoit un message WhatsApp / SMS / Messenger
+        2. Notre IA analyse automatiquement le message (localement)
+        3. Si un danger est détecté, le parent reçoit une alerte
+        4. **Le parent ne voit jamais le contenu du message**
+        5. L'enfant garde sa vie privée, les parents peuvent protéger
         
-        **3. Le parent reçoit UNIQUEMENT l'alerte** → Pas le contenu du message
-        
-        **4. La vie privée est respectée** → L'enfant n'est pas espionné
-        
-        **5. Le parent peut agir** → Dialogue éducatif, pas punitif
+        **Dans cette démonstration :**
+        - Nous simulons l'arrivée de messages
+        - L'analyse est 100% fonctionnelle
+        - Ce que vous voyez = ce que le parent reçoit
         """)
 
-st.markdown("---")
-st.caption("🔒 **Protection sans espionnage** - L'IA protège, ne surveille pas")
-
-
-
+# Footer
+st.markdown("""
+<div class="footer">
+    <p>🔒 Protection sans espionnage – L'IA analyse sans violer la vie privée</p>
+    <p>© 2025 AI Guardian – Cybersécurité éthique</p>
+</div>
+""", unsafe_allow_html=True)
