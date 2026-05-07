@@ -2,8 +2,8 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import time
+from datetime import datetime
 
-# CONFIGURATION PAGE
 st.set_page_config(
     page_title="AI Guardian | Parent Dashboard",
     page_icon="🛡️",
@@ -11,84 +11,143 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# CSS PERSONNALISÉ
+# CSS MODERNE AVEC ANIMATIONS
 st.markdown("""
 <style>
-    /* Import Google Fonts */
+    /* Police moderne */
     @import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100..900;1,100..900&display=swap');
     
-    html, body, [class*="css"] {
+    * {
         font-family: 'Inter', sans-serif;
     }
     
-    /* Header gradient */
-    .main-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 2rem;
-        border-radius: 1rem;
-        margin-bottom: 2rem;
-        text-align: center;
+    /* Animation fade in */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
     
-    /* Cartes */
+    .fade-in {
+        animation: fadeInUp 0.6s ease-out;
+    }
+    
+    /* Hero section avec dégradé animé */
+    .hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+        background-size: 200% 200%;
+        animation: gradient 3s ease infinite;
+        padding: 2.5rem;
+        border-radius: 1.5rem;
+        margin-bottom: 2rem;
+        text-align: center;
+        box-shadow: 0 20px 35px -10px rgba(0,0,0,0.2);
+    }
+    
+    @keyframes gradient {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    
+    /* Cartes modernes */
     .card {
-        background: white;
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
         padding: 1.5rem;
         border-radius: 1rem;
-        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-        margin-bottom: 1rem;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        transition: all 0.3s ease;
+        border: 1px solid rgba(102, 126, 234, 0.1);
+    }
+    
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 25px -12px rgb(0 0 0 / 0.2);
     }
     
     /* Badge privacy */
     .privacy-badge {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
         color: white;
-        padding: 0.5rem 1rem;
+        padding: 0.75rem 1.5rem;
         border-radius: 2rem;
         font-size: 0.875rem;
         font-weight: 600;
         text-align: center;
+        display: inline-block;
+        box-shadow: 0 4px 10px rgba(16,185,129,0.3);
+    }
+    
+    /* Score card */
+    .score-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
     }
     
     /* Footer */
     .footer {
         text-align: center;
         padding: 2rem;
-        color: #6b7280;
-        font-size: 0.875rem;
-        border-top: 1px solid #e5e7eb;
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        border-radius: 1rem;
         margin-top: 2rem;
+        color: #94a3b8;
+    }
+    
+    /* Upload zone stylisée */
+    .upload-zone {
+        border: 2px dashed #c7d2fe;
+        border-radius: 1rem;
+        padding: 2rem;
+        text-align: center;
+        background: #f8fafc;
+        transition: all 0.3s ease;
+    }
+    
+    .upload-zone:hover {
+        border-color: #667eea;
+        background: #eff6ff;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# EN-TÊTE
+# HERO SECTION
 st.markdown("""
-<div class="main-header">
-    <h1 style="color: white; margin: 0;">🛡️ AI Guardian</h1>
-    <p style="color: #e0e7ff; margin: 0.5rem 0 0 0;">Protection des enfants sans espionnage</p>
+<div class="hero fade-in">
+    <h1 style="color: white; margin: 0; font-size: 3rem;">🛡️ AI Guardian</h1>
+    <p style="color: #f1f5f9; margin: 0.5rem 0 0 0; font-size: 1.2rem;">Protection des enfants sans espionnage</p>
+    <p style="color: #c7d2fe; margin: 1rem 0 0 0; font-size: 0.9rem;">🤖 IA éthique · 🔒 Respect de la vie privée · ⚡ Alertes en temps réel</p>
 </div>
 """, unsafe_allow_html=True)
 
-# === ZONE UPLOAD ===
+# UPLOAD ZONE
+st.markdown('<div class="fade-in">', unsafe_allow_html=True)
 st.markdown("### 📂 Importer une conversation")
 
-uploaded_file = st.file_uploader(
-    "Téléchargez une conversation (.txt)",
-    type=["txt"],
-    help="Exportez une conversation depuis WhatsApp, Messenger ou Discord"
-)
+with st.container():
+    uploaded_file = st.file_uploader(
+        "Téléchargez un fichier .txt",
+        type=["txt"],
+        help="Exportez une conversation depuis WhatsApp, Messenger ou Discord"
+    )
+st.markdown('</div>', unsafe_allow_html=True)
 
 if uploaded_file is not None:
     conversation = uploaded_file.read().decode("utf-8")
     
-    # Aperçu masqué (privacy)
-    with st.expander("🔒 Aperçu (caché aux parents en version réelle)"):
+    with st.expander("🔒 Aperçu (masqué aux parents en version réelle)"):
         st.text(conversation[:500])
     
     st.success(f"✅ Conversation chargée – {len(conversation)} caractères analysés")
     
-    # === ANALYSE IA ===
     with st.spinner("🤖 IA en cours d'analyse..."):
         time.sleep(1.5)
     
@@ -109,7 +168,6 @@ if uploaded_file is not None:
     TOXICITY_KEYWORDS = ["shut up", "idiot", "moron", "bastard", "damn"]
     
     text_lower = conversation.lower()
-    
     grooming_count = sum(1 for w in GROOMING_KEYWORDS if w in text_lower)
     manipulation_count = sum(1 for w in MANIPULATION_KEYWORDS if w in text_lower)
     bullying_count = sum(1 for w in BULLYING_KEYWORDS if w in text_lower)
@@ -125,38 +183,62 @@ if uploaded_file is not None:
     
     # DASHBOARD
     st.markdown("---")
-    st.markdown("## 📊 Tableau de bord des risques")
+    st.markdown('<h2 style="text-align: center;">📊 Tableau de bord des risques</h2>', unsafe_allow_html=True)
     
-    # Cartes de score
+    # SCORE CARD
     col1, col2, col3, col4 = st.columns(4)
     
-    with col1:
-        if global_score < 30:
-            st.markdown("""
-            <div class="card" style="text-align: center;">
-                <h3>🟢 Score global</h3>
-                <h1 style="font-size: 3rem; margin: 0; color: #10b981;">{:.0f}%</h1>
-                <p style="color: #10b981;">Niveau bas</p>
+    if global_score < 30:
+        with col1:
+            st.markdown(f"""
+            <div class="score-card" style="border-bottom: 4px solid #10b981;">
+                <h3 style="color: #64748b;">Score global</h3>
+                <h1 style="font-size: 3.5rem; margin: 0; color: #10b981;">{global_score:.0f}%</h1>
+                <p style="color: #10b981;">🟢 Niveau bas</p>
             </div>
-            """.format(global_score), unsafe_allow_html=True)
-        elif global_score < 60:
-            st.markdown("""
-            <div class="card" style="text-align: center;">
-                <h3>🟡 Score global</h3>
-                <h1 style="font-size: 3rem; margin: 0; color: #f59e0b;">{:.0f}%</h1>
-                <p style="color: #f59e0b;">Niveau moyen</p>
+            """, unsafe_allow_html=True)
+    elif global_score < 60:
+        with col1:
+            st.markdown(f"""
+            <div class="score-card" style="border-bottom: 4px solid #f59e0b;">
+                <h3 style="color: #64748b;">Score global</h3>
+                <h1 style="font-size: 3.5rem; margin: 0; color: #f59e0b;">{global_score:.0f}%</h1>
+                <p style="color: #f59e0b;">🟡 Niveau moyen</p>
             </div>
-            """.format(global_score), unsafe_allow_html=True)
-        else:
-            st.markdown("""
-            <div class="card" style="text-align: center;">
-                <h3>🔴 Score global</h3>
-                <h1 style="font-size: 3rem; margin: 0; color: #ef4444;">{:.0f}%</h1>
-                <p style="color: #ef4444;">Niveau élevé</p>
+            """, unsafe_allow_html=True)
+    else:
+        with col1:
+            st.markdown(f"""
+            <div class="score-card" style="border-bottom: 4px solid #ef4444;">
+                <h3 style="color: #64748b;">Score global</h3>
+                <h1 style="font-size: 3.5rem; margin: 0; color: #ef4444;">{global_score:.0f}%</h1>
+                <p style="color: #ef4444;">🔴 Niveau élevé</p>
             </div>
-            """.format(global_score), unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
     
-    # Graphique
+    with col2:
+        st.markdown(f"""
+        <div class="score-card">
+            <h3 style="color: #64748b;">Grooming</h3>
+            <h1 style="font-size: 2.5rem; margin: 0;">{grooming_score:.0f}%</h1>
+        </div>
+        """, unsafe_allow_html=True)
+    with col3:
+        st.markdown(f"""
+        <div class="score-card">
+            <h3 style="color: #64748b;">Manipulation</h3>
+            <h1 style="font-size: 2.5rem; margin: 0;">{manipulation_score:.0f}%</h1>
+        </div>
+        """, unsafe_allow_html=True)
+    with col4:
+        st.markdown(f"""
+        <div class="score-card">
+            <h3 style="color: #64748b;">Cyberharcèlement</h3>
+            <h1 style="font-size: 2.5rem; margin: 0;">{bullying_score:.0f}%</h1>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # GRAPHIQUE
     df = pd.DataFrame({
         "Type de menace": ["Grooming", "Manipulation", "Cyberharcèlement", "Toxicité"],
         "Score (%)": [grooming_score, manipulation_score, bullying_score, toxicity_score]
@@ -165,21 +247,12 @@ if uploaded_file is not None:
     fig = px.bar(df, x="Type de menace", y="Score (%)", 
                  color="Score (%)",
                  color_continuous_scale=["#10b981", "#f59e0b", "#ef4444"],
-                 title="Analyse par catégorie",
-                 range_y=[0, 100])
-    
-    fig.update_layout(
-        plot_bgcolor="white",
-        paper_bgcolor="white",
-        font_family="Inter",
-        height=400
-    )
-    
+                 title="Analyse par catégorie")
+    fig.update_layout(plot_bgcolor="white", paper_bgcolor="white", font_family="Inter", height=450)
     st.plotly_chart(fig, use_container_width=True)
     
-    # Alertes
+    # ALERTES
     st.markdown("## ⚠️ Alertes détectées")
-    
     alert_count = 0
     if grooming_score > 50:
         st.error("🔴 **Grooming élevé** – Tentative d'isolement ou de manipulation détectée")
@@ -193,22 +266,19 @@ if uploaded_file is not None:
     if alert_count == 0:
         st.success("✅ **Aucune menace significative** – La conversation semble sûre")
     
-    # Privacy badge
+    # PRIVACY BADGE
     st.markdown("""
     <div style="text-align: center; margin: 2rem 0;">
-        <div class="privacy-badge" style="display: inline-block;">
-            🔒 Mode vie privée activé – Les parents ne voient pas le contenu des messages
+        <div class="privacy-badge">
+            🔒 Mode vie privée – Les parents ne voient pas le contenu des messages
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-else:
-    st.info("👆 Téléchargez une conversation pour commencer l'analyse")
-
-# Footer
+# FOOTER
 st.markdown("""
-<div class="footer">
-    <p>🔒 Protection sans espionnage – L'IA analyse localement, la vie privée est respectée</p>
-    <p>© 2025 AI Guardian – Projet de cybersécurité éthique</p>
+<div class="footer fade-in">
+    <p style="margin: 0;">🔒 Protection sans espionnage – L'IA analyse localement, la vie privée est respectée</p>
+    <p style="margin: 0.5rem 0 0 0; font-size: 0.8rem;">© 2025 AI Guardian – Projet de cybersécurité éthique</p>
 </div>
 """, unsafe_allow_html=True)
