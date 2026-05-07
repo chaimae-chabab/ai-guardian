@@ -1,236 +1,214 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import re
+import time
 
-# Configuration de la page
+# CONFIGURATION PAGE
 st.set_page_config(
-    page_title="AI Guardian",
+    page_title="AI Guardian | Parent Dashboard",
     page_icon="🛡️",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="collapsed"
 )
 
-# Titre principal
-st.title("🛡️ AI Guardian")
-st.subheader("Protecting children without spying")
+# CSS PERSONNALISÉ
+st.markdown("""
+<style>
+    /* Import Google Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100..900;1,100..900&display=swap');
+    
+    html, body, [class*="css"] {
+        font-family: 'Inter', sans-serif;
+    }
+    
+    /* Header gradient */
+    .main-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 2rem;
+        border-radius: 1rem;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    /* Cartes */
+    .card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 1rem;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        margin-bottom: 1rem;
+    }
+    
+    /* Badge privacy */
+    .privacy-badge {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 2rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-align: center;
+    }
+    
+    /* Footer */
+    .footer {
+        text-align: center;
+        padding: 2rem;
+        color: #6b7280;
+        font-size: 0.875rem;
+        border-top: 1px solid #e5e7eb;
+        margin-top: 2rem;
+    }
+</style>
+""", unsafe_allow_html=True)
 
-# === LISTE DES MOTS DANGEREUX À DÉTECTER ===
-GROOMING_KEYWORDS = [
-    "don't tell anyone", "keep it secret", "just between us",
-    "don't tell your parents", "they won't understand",
-    "you're special", "only you", "trust me", "our secret",
-    "between you and me", "secret", "don't tell", "hide this",
-    "don't share", "private message", "just us", "secret chat",
-    "your parents don't understand", "they don't get you"
-]
+# EN-TÊTE
+st.markdown("""
+<div class="main-header">
+    <h1 style="color: white; margin: 0;">🛡️ AI Guardian</h1>
+    <p style="color: #e0e7ff; margin: 0.5rem 0 0 0;">Protection des enfants sans espionnage</p>
+</div>
+""", unsafe_allow_html=True)
 
-MANIPULATION_KEYWORDS = [
-    "if you love me", "if you really care", "you owe me",
-    "after everything i did", "you're the only one",
-    "don't abandon me", "prove your love", "prove you care",
-    "you would if you loved me", "you're making me sad",
-    "you're hurting me", "after all i've done", "i sacrificed"
-]
+# === ZONE UPLOAD ===
+st.markdown("### 📂 Importer une conversation")
 
-BULLYING_KEYWORDS = [
-    "stupid", "useless", "nobody likes you", "hate you",
-    "kill yourself", "worthless", "ugly", "fat", "loser",
-    "idiot", "moron", "dumb", "pathetic", "disappointment",
-    "everyone hates you", "you're a joke", "give up"
-]
+uploaded_file = st.file_uploader(
+    "Téléchargez une conversation (.txt)",
+    type=["txt"],
+    help="Exportez une conversation depuis WhatsApp, Messenger ou Discord"
+)
 
-TOXICITY_KEYWORDS = [
-    "shut up", "bastard", "damn", "hell", "crap",
-    "screw you", "what's wrong with you", "are you stupid"
-]
-
-NEGATIVE_WORDS = [
-    "hate", "terrible", "awful", "horrible", "sad", "depressed",
-    "lonely", "hopeless", "scared", "anxious", "hurt", "pain"
-]
-
-def analyze_conversation(text):
-    """Analyse le texte et retourne des scores de danger"""
+if uploaded_file is not None:
+    conversation = uploaded_file.read().decode("utf-8")
     
-    text_lower = text.lower()
+    # Aperçu masqué (privacy)
+    with st.expander("🔒 Aperçu (caché aux parents en version réelle)"):
+        st.text(conversation[:500])
     
-    # Compter les mots dangereux
-    grooming_count = 0
-    for word in GROOMING_KEYWORDS:
-        grooming_count += text_lower.count(word)
+    st.success(f"✅ Conversation chargée – {len(conversation)} caractères analysés")
     
-    manipulation_count = 0
-    for word in MANIPULATION_KEYWORDS:
-        manipulation_count += text_lower.count(word)
+    # === ANALYSE IA ===
+    with st.spinner("🤖 IA en cours d'analyse..."):
+        time.sleep(1.5)
     
-    bullying_count = 0
-    for word in BULLYING_KEYWORDS:
-        bullying_count += text_lower.count(word)
+    # Mots clés
+    GROOMING_KEYWORDS = [
+        "don't tell anyone", "keep it secret", "just between us",
+        "don't tell your parents", "they won't understand",
+        "you're special", "only you", "trust me", "our secret"
+    ]
+    MANIPULATION_KEYWORDS = [
+        "if you love me", "if you really care", "you owe me",
+        "you're the only one", "don't abandon me", "prove your love"
+    ]
+    BULLYING_KEYWORDS = [
+        "stupid", "useless", "nobody likes you", "hate you",
+        "kill yourself", "worthless", "ugly", "loser"
+    ]
+    TOXICITY_KEYWORDS = ["shut up", "idiot", "moron", "bastard", "damn"]
     
-    toxicity_count = 0
-    for word in TOXICITY_KEYWORDS:
-        toxicity_count += text_lower.count(word)
+    text_lower = conversation.lower()
     
-    negative_count = 0
-    for word in NEGATIVE_WORDS:
-        negative_count += text_lower.count(word)
+    grooming_count = sum(1 for w in GROOMING_KEYWORDS if w in text_lower)
+    manipulation_count = sum(1 for w in MANIPULATION_KEYWORDS if w in text_lower)
+    bullying_count = sum(1 for w in BULLYING_KEYWORDS if w in text_lower)
+    toxicity_count = sum(1 for w in TOXICITY_KEYWORDS if w in text_lower)
     
-    # NOUVEAU : Calcul plus sensible (max 5 mots = 100%)
-    max_score = 5  # Changé de 15 à 5
-    
+    max_score = 5
     grooming_score = min(100, (grooming_count / max_score) * 100)
     manipulation_score = min(100, (manipulation_count / max_score) * 100)
     bullying_score = min(100, (bullying_count / max_score) * 100)
     toxicity_score = min(100, (toxicity_count / max_score) * 100)
     
-    # Bonus : si plusieurs catégories, augmenter le score
-    total_detections = (grooming_count > 0) + (manipulation_count > 0) + (bullying_count > 0) + (toxicity_count > 0)
-    if total_detections >= 2:
-        grooming_score = min(100, grooming_score + 15)
-        manipulation_score = min(100, manipulation_score + 15)
+    global_score = (grooming_score + manipulation_score + bullying_score + toxicity_score) / 4
     
-    # Score de négativité
-    negativity_score = min(100, (negative_count / max_score) * 100)
-    
-    return {
-        "Grooming": round(grooming_score, 1),
-        "Emotional Manipulation": round(manipulation_score, 1),
-        "Cyberbullying": round(bullying_score, 1),
-        "Toxicity": round(toxicity_score, 1),
-        "Negativity": round(negativity_score, 1)
-    }
-# Upload fichier
-st.markdown("### 📂 Upload a conversation")
-uploaded_file = st.file_uploader("Choose a .txt file", type=["txt"])
-
-if uploaded_file is not None:
-    conversation = uploaded_file.read().decode("utf-8")
-    
-    with st.expander("Preview (hidden from parents in real version)"):
-        st.text(conversation[:500] + ("..." if len(conversation) > 500 else ""))
-    
-    st.success(f"✅ Conversation loaded successfully! ({len(conversation)} characters)")
-    
-    # === ANALYSE IA RÉELLE ===
-    scores = analyze_conversation(conversation)
-    
-    # Score global (moyenne des 4 premiers scores)
-    global_score = (scores["Grooming"] + scores["Emotional Manipulation"] + 
-                    scores["Cyberbullying"] + scores["Toxicity"]) / 4
-    
-    # === DASHBOARD ===
+    # DASHBOARD
     st.markdown("---")
-    st.markdown("## 📊 Risk Analysis Dashboard")
+    st.markdown("## 📊 Tableau de bord des risques")
     
-    # Affichage du score global
-    col1, col2, col3 = st.columns(3)
+    # Cartes de score
+    col1, col2, col3, col4 = st.columns(4)
+    
     with col1:
         if global_score < 30:
-            st.metric("🟢 Global Risk Score", f"{global_score:.0f}%", delta="Safe")
-        elif global_score < 55:
-            st.metric("🟡 Global Risk Score", f"{global_score:.0f}%", delta="Medium Risk")
+            st.markdown("""
+            <div class="card" style="text-align: center;">
+                <h3>🟢 Score global</h3>
+                <h1 style="font-size: 3rem; margin: 0; color: #10b981;">{:.0f}%</h1>
+                <p style="color: #10b981;">Niveau bas</p>
+            </div>
+            """.format(global_score), unsafe_allow_html=True)
+        elif global_score < 60:
+            st.markdown("""
+            <div class="card" style="text-align: center;">
+                <h3>🟡 Score global</h3>
+                <h1 style="font-size: 3rem; margin: 0; color: #f59e0b;">{:.0f}%</h1>
+                <p style="color: #f59e0b;">Niveau moyen</p>
+            </div>
+            """.format(global_score), unsafe_allow_html=True)
         else:
-            st.metric("🔴 Global Risk Score", f"{global_score:.0f}%", delta="High Risk")
+            st.markdown("""
+            <div class="card" style="text-align: center;">
+                <h3>🔴 Score global</h3>
+                <h1 style="font-size: 3rem; margin: 0; color: #ef4444;">{:.0f}%</h1>
+                <p style="color: #ef4444;">Niveau élevé</p>
+            </div>
+            """.format(global_score), unsafe_allow_html=True)
     
-    with col2:
-        if global_score < 30:
-            threat_level = "LOW"
-        elif global_score < 55:
-            threat_level = "MEDIUM"
-        else:
-            threat_level = "HIGH"
-    
-    with col3:
-        high_threats = sum(1 for k in ["Grooming", "Emotional Manipulation", "Cyberbullying", "Toxicity"] 
-                          if scores.get(k, 0) > 50)
-        st.metric("📊 Threats Detected", high_threats)
-    
-    # Graphique des menaces
-    st.markdown("### 🔍 Threats Breakdown")
-    
+    # Graphique
     df = pd.DataFrame({
-        "Threat Type": ["Grooming", "Emotional Manipulation", "Cyberbullying", "Toxicity"],
-        "Risk Score (%)": [scores["Grooming"], scores["Emotional Manipulation"], 
-                          scores["Cyberbullying"], scores["Toxicity"]]
+        "Type de menace": ["Grooming", "Manipulation", "Cyberharcèlement", "Toxicité"],
+        "Score (%)": [grooming_score, manipulation_score, bullying_score, toxicity_score]
     })
     
-    fig = px.bar(df, x="Threat Type", y="Risk Score (%)", 
-                 color="Risk Score (%)",
-                 color_continuous_scale=["green", "yellow", "red"],
-                 title="Risk Scores by Category",
+    fig = px.bar(df, x="Type de menace", y="Score (%)", 
+                 color="Score (%)",
+                 color_continuous_scale=["#10b981", "#f59e0b", "#ef4444"],
+                 title="Analyse par catégorie",
                  range_y=[0, 100])
+    
+    fig.update_layout(
+        plot_bgcolor="white",
+        paper_bgcolor="white",
+        font_family="Inter",
+        height=400
+    )
     
     st.plotly_chart(fig, use_container_width=True)
     
-    # Alertes spécifiques
-    st.markdown("### ⚠️ Alerts")
+    # Alertes
+    st.markdown("## ⚠️ Alertes détectées")
     
     alert_count = 0
-    
-    if scores["Grooming"] > 70:
-        st.error("🔴 **HIGH GROOMING RISK** - Suspicious secrecy/manipulation patterns detected")
+    if grooming_score > 50:
+        st.error("🔴 **Grooming élevé** – Tentative d'isolement ou de manipulation détectée")
         alert_count += 1
-    elif scores["Grooming"] > 40:
-        st.warning("🟡 **Medium Grooming Risk** - Monitor conversation for secrecy language")
+    if manipulation_score > 50:
+        st.warning("🟡 **Manipulation émotionnelle** – Langage de culpabilisation détecté")
         alert_count += 1
-    
-    if scores["Emotional Manipulation"] > 70:
-        st.error("🔴 **Emotional manipulation detected** - Guilt-inducing or pressure language")
+    if bullying_score > 50:
+        st.warning("🟡 **Cyberharcèlement** – Langage agressif détecté")
         alert_count += 1
-    elif scores["Emotional Manipulation"] > 40:
-        st.warning("🟡 Suspicious emotional language detected")
-        alert_count += 1
+    if alert_count == 0:
+        st.success("✅ **Aucune menace significative** – La conversation semble sûre")
     
-    if scores["Cyberbullying"] > 70:
-        st.error("🔴 **Cyberbullying detected** - Aggressive or humiliating language")
-        alert_count += 1
-    elif scores["Cyberbullying"] > 40:
-        st.warning("🟡 Potential harassment patterns detected")
-        alert_count += 1
-    
-    if scores["Toxicity"] > 70:
-        st.error("🔴 **High toxicity level** - Abusive language present")
-        alert_count += 1
-    elif scores["Toxicity"] > 40:
-        st.warning("🟡 Moderate toxicity detected")
-        alert_count += 1
-    
-    if scores["Negativity"] > 60:
-        st.info("📉 **Very negative tone detected** - Conversation shows distress or sadness indicators")
-    
-    if alert_count == 0 and global_score < 30:
-        st.success("✅ **No significant threats detected** - Conversation appears safe")
-    
-    # Privacy mode
-    st.markdown("---")
-    st.success("🔒 **Privacy Mode Enabled** - Parents see only alerts, not conversation content")
-    
-    # Conseils pour les parents
-    with st.expander("💡 Parental Guidance & Recommendations"):
-        st.write("**Based on AI analysis, here are recommendations:**")
-        if global_score > 60:
-            st.write("⚠️ **Urgent:** Have a calm, non-judgmental conversation with your child")
-            st.write("🔍 Ask open-ended questions about their online friendships")
-            st.write("🛡️ Reinforce that they can tell you anything without punishment")
-            st.write("📞 Consider speaking with a school counselor if needed")
-        elif global_score > 30:
-            st.write("👂 **Proactive:** Listen actively to your child's online experiences")
-            st.write("💬 Encourage open communication without fear")
-            st.write("📚 Use this as an opportunity to discuss online safety")
-        else:
-            st.write("✅ **Maintain trust:** Continue having regular conversations about online safety")
-            st.write("🎯 Reinforce positive online behavior and boundaries")
-    
-    # Statistiques détaillées
-    with st.expander("📊 Detailed Analysis Statistics"):
-        st.write(f"**Conversation length:** {len(conversation)} characters")
-        st.write(f"**Words analyzed:** Approximately {len(conversation.split())}")
-        st.write(f"**Negative sentiment score:** {scores['Negativity']:.0f}%")
-        st.write("---")
-        st.write("**Detection keywords found:**")
-        st.write(f"- Grooming-related terms: {int(scores['Grooming'] / 100 * 15)} occurrences")
-        st.write(f"- Manipulation-related terms: {int(scores['Emotional Manipulation'] / 100 * 15)} occurrences")
-        st.write(f"- Bullying-related terms: {int(scores['Cyberbullying'] / 100 * 15)} occurrences")
+    # Privacy badge
+    st.markdown("""
+    <div style="text-align: center; margin: 2rem 0;">
+        <div class="privacy-badge" style="display: inline-block;">
+            🔒 Mode vie privée activé – Les parents ne voient pas le contenu des messages
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 else:
-    st.info("📁 Please upload a conversation file (.txt)")
+    st.info("👆 Téléchargez une conversation pour commencer l'analyse")
+
+# Footer
+st.markdown("""
+<div class="footer">
+    <p>🔒 Protection sans espionnage – L'IA analyse localement, la vie privée est respectée</p>
+    <p>© 2025 AI Guardian – Projet de cybersécurité éthique</p>
+</div>
+""", unsafe_allow_html=True)
